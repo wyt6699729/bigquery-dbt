@@ -2,6 +2,7 @@ sources:
   - name: jaffle_shop
     database: dbt-tutorial
     schema: jaffle_shop
+    description: A clone of a Postgres application database.
     config:
       freshness:
         warn_after:
@@ -14,7 +15,57 @@ sources:
 
     tables:
       - name: customers
+        description: Raw customer data
         freshness: null
-        
+        columns:
+          - name: id
+            description: Primary key for the customer data
+            data_tests:
+              - unique
+              - not_null
+
       - name: orders
-          
+        description: Raw orders data.
+        columns:
+          - name: id
+            description: Primary key for order data
+            data_tests:
+              - unique
+              - not_null
+
+models:
+  - name: stg_jaffle_shop__customers
+    description: The grain of this table is one unique customer per row.
+    columns:
+      - name: customer_id
+        description: Primary key for the custoer table
+        data_tests:
+          - unique
+          - not_null
+  - name: stg_jaffle_shop__orders
+    description: One order per row
+    columns:
+      - name: order_id
+        description: primary key for the order table
+        data_tests:
+          - unique
+          - not_null
+      - name: order_status
+        description: "{{doc('order_status')}}"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  [
+                    "placed",
+                    "shipped",
+                    "completed",
+                    "returned",
+                    "return_pending",
+                  ]
+      - name: customer_id
+        data_tests:
+          - relationships:
+              arguments:
+                field: customer_id
+                to: ref('stg_jaffle_shop__customers')
