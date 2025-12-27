@@ -1,0 +1,25 @@
+-- 1. Fetch the distinct values dynamically
+{% set payment_methods = dbt_utils.get_column_values(
+    table=ref('stg_stripe__payment'), 
+    column='payment_method'
+) -%}
+
+with payment as (
+    select * from {{ ref('stg_stripe__payment') }}
+),
+
+pivoted as (
+    select 
+        order_id,
+        -- 2. Loop through the dynamically fetched list
+        {% for payment_method in payment_methods -%}
+        sum(case when payment_method = '{{ payment_method }}' then amount else 0 end) as {{ payment_method }}_amount
+        {%- if not loop.last -%}
+            ,
+        {% endif -%}
+        {%- endfor %}
+    from payment
+    group by 1
+)
+
+select * from pivoted
