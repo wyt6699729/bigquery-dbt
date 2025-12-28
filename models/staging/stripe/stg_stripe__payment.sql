@@ -13,7 +13,7 @@ renamed as (
         orderid as order_id,
         paymentmethod payment_method,
         status as payment_status,
-        amount,
+        {{ cents_to_dollars('amount', 4) }} as amount,
         created,
         _batched_at
 
